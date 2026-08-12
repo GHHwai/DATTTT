@@ -48,20 +48,24 @@ class ChatController extends Controller
     }
 
     /**
-     * Call the OpenAI-compatible Chat Completions API.
-     * Swap the base_uri / model to use a different provider if you like
-     * (e.g. OpenRouter, Groq, Azure OpenAI, or a local Ollama server).
+     * Call an OpenAI-compatible Chat Completions API.
+     *
+     * Defaults to Groq (https://console.groq.com/keys), which has a free
+     * tier and an OpenAI-compatible endpoint. Swap the base_uri / model
+     * in config/services.php (or the AI_* env vars) to use a different
+     * provider if you like (e.g. OpenRouter, Gemini, or a local Ollama
+     * server) — no code changes needed here.
      */
     private function askAi($history): string
     {
-        $apiKey = config('services.openai.key');
+        $apiKey = config('services.ai.key');
 
         if (! $apiKey) {
-            return "The chatbot isn't configured yet. Set OPENAI_API_KEY in your .env file to enable it.";
+            return "The chatbot isn't configured yet. Set AI_API_KEY in your .env file (get a free key at https://console.groq.com/keys) to enable it.";
         }
 
         $client = new Client([
-            'base_uri' => config('services.openai.base_uri', 'https://api.openai.com/v1/'),
+            'base_uri' => config('services.ai.base_uri', 'https://api.groq.com/openai/v1/'),
             'timeout' => 30,
         ]);
 
@@ -80,7 +84,7 @@ class ChatController extends Controller
                     'Content-Type' => 'application/json',
                 ],
                 'json' => [
-                    'model' => config('services.openai.model', 'gpt-4o-mini'),
+                    'model' => config('services.ai.model', 'llama-3.3-70b-versatile'),
                     'messages' => $messages,
                     'temperature' => 0.7,
                 ],
