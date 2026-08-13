@@ -4,7 +4,7 @@ use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ChatController;
-use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TicketController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -28,13 +28,37 @@ Route::post('/logout', [LoginController::class, 'destroy'])
 Route::middleware('auth')->group(function () {
     Route::view('/dashboard', 'dashboard')->name('dashboard');
 
-    Route::resource('tasks', TaskController::class)->except(['show']);
+    Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
+
+    // IMPORTANT: literal "/tickets/create" must be registered BEFORE the
+    // "/tickets/{ticket}" wildcard route below, or Laravel will try to
+    // route-model-bind "create" as a ticket ID and 404.
+    Route::middleware('permission:tickets.create')->group(function () {
+        Route::get('/tickets/create', [TicketController::class, 'create'])->name('tickets.create');
+        Route::post('/tickets', [TicketController::class, 'store'])->name('tickets.store');
+    });
+
+    // Claiming/releasing tickets from the shared IT queue.
+    Route::middleware('permission:tickets.claim')->group(function () {
+        Route::post('/tickets/{ticket}/claim', [TicketController::class, 'claim'])->name('tickets.claim');
+        Route::post('/tickets/{ticket}/unclaim', [TicketController::class, 'unclaim'])->name('tickets.unclaim');
+    });
+
+    // Updating ticket status / resolving.
+    Route::patch('/tickets/{ticket}/status', [TicketController::class, 'updateStatus'])
+        ->middleware('permission:tickets.resolve')
+        ->name('tickets.status');
+
+    // Wildcard show/comment routes go last so they don't swallow the
+    // literal routes above.
+    Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
+    Route::post('/tickets/{ticket}/comments', [TicketController::class, 'comment'])->name('tickets.comments.store');
 
     Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
     Route::post('/chat/send', [ChatController::class, 'send'])->name('chat.send');
 });
 
-// --- Admin-only routes ---
+// --- Admin-only routes (reports/analytics, NOT available to plain IT staff) ---
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('reports');
     Route::get('/reports/data', [ReportController::class, 'chartData'])->name('reports.data');

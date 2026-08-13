@@ -13,11 +13,13 @@ class RolePermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
-            'tasks.view' => 'View tasks',
-            'tasks.create' => 'Create tasks',
-            'tasks.edit' => 'Edit tasks',
-            'tasks.delete' => 'Delete tasks',
-            'reports.view' => 'View admin reports',
+            'tickets.view.own' => 'View own tickets',
+            'tickets.view.all' => 'View the IT ticket queue (all tickets)',
+            'tickets.create' => 'Submit tickets',
+            'tickets.comment' => 'Comment on tickets',
+            'tickets.claim' => 'Claim tickets from the queue',
+            'tickets.resolve' => 'Update ticket status / resolve tickets',
+            'reports.view' => 'View admin reports & analytics',
             'users.manage' => 'Manage users & roles',
         ];
 
@@ -26,23 +28,52 @@ class RolePermissionSeeder extends Seeder
         }
 
         $adminRole = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
-        $userRole = Role::firstOrCreate(['name' => 'user'], ['label' => 'User']);
+        $itRole = Role::firstOrCreate(['name' => 'it_staff'], ['label' => 'IT Staff']);
+        $userRole = Role::firstOrCreate(['name' => 'user'], ['label' => 'Employee']);
 
-        // Admins get everything.
+        // Admins get everything — including reports/analytics and user management,
+        // which IT staff deliberately do NOT get.
         $adminRole->permissions()->sync(Permission::all()->pluck('id'));
 
-        // Regular users can manage their own tasks only.
-        $userRole->permissions()->sync(
-            Permission::whereIn('name', ['tasks.view', 'tasks.create', 'tasks.edit', 'tasks.delete'])->pluck('id')
+        // IT staff: work the shared ticket queue, claim tickets, resolve them,
+        // comment — but no reports/analytics, no user management.
+        $itRole->permissions()->sync(
+            Permission::whereIn('name', [
+                'tickets.view.own',
+                'tickets.view.all',
+                'tickets.create',
+                'tickets.comment',
+                'tickets.claim',
+                'tickets.resolve',
+            ])->pluck('id')
         );
 
-        // A default admin account — change this password immediately after seeding.
+        // Regular employees: submit tickets and follow their own.
+        $userRole->permissions()->sync(
+            Permission::whereIn('name', [
+                'tickets.view.own',
+                'tickets.create',
+                'tickets.comment',
+            ])->pluck('id')
+        );
+
+        // Demo accounts — change these passwords immediately after seeding.
         User::firstOrCreate(
             ['email' => 'admin@example.com'],
             [
                 'name' => 'Admin',
                 'password' => Hash::make('password'),
                 'role_id' => $adminRole->id,
+                'email_verified_at' => now(),
+            ]
+        );
+
+        User::firstOrCreate(
+            ['email' => 'itstaff@example.com'],
+            [
+                'name' => 'IT Staff',
+                'password' => Hash::make('password'),
+                'role_id' => $itRole->id,
                 'email_verified_at' => now(),
             ]
         );

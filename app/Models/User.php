@@ -54,9 +54,20 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
-    public function tasks(): HasMany
+    /**
+     * Tickets this user submitted (as an employee).
+     */
+    public function tickets(): HasMany
     {
-        return $this->hasMany(Task::class);
+        return $this->hasMany(Ticket::class);
+    }
+
+    /**
+     * Tickets this user has claimed (as IT staff).
+     */
+    public function assignedTickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class, 'assigned_to');
     }
 
     public function chatMessages(): HasMany
@@ -75,6 +86,11 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->hasRole('admin');
+    }
+
+    public function isItStaff(): bool
+    {
+        return $this->hasRole('it_staff');
     }
 
     /**

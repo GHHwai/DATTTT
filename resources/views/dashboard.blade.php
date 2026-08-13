@@ -10,8 +10,8 @@
     </p>
 
     <div class="flex gap-3">
-        <a href="{{ route('tasks.index') }}" class="bg-indigo-600 text-white rounded px-4 py-2 text-sm hover:bg-indigo-700">
-            Go to Tasks
+        <a href="{{ route('tickets.index') }}" class="bg-indigo-600 text-white rounded px-4 py-2 text-sm hover:bg-indigo-700">
+            {{ auth()->user()->hasPermission('tickets.view.all') ? 'Go to Ticket Queue' : 'My Tickets' }}
         </a>
         <a href="{{ route('chat.index') }}" class="bg-gray-800 text-white rounded px-4 py-2 text-sm hover:bg-gray-900">
             Chat with AI

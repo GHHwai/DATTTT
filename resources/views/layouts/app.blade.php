@@ -15,12 +15,14 @@
 
             @auth
                 <div class="flex items-center gap-4 text-sm">
-                    <a href="{{ route('tasks.index') }}" class="hover:underline">Tasks</a>
+                    <a href="{{ route('tickets.index') }}" class="hover:underline">
+                        {{ auth()->user()->hasPermission('tickets.view.all') ? 'Ticket Queue' : 'My Tickets' }}
+                    </a>
                     <a href="{{ route('chat.index') }}" class="hover:underline">AI Chat</a>
                     @if (auth()->user()->isAdmin())
                         <a href="{{ route('admin.reports') }}" class="hover:underline text-indigo-600">Admin Reports</a>
                     @endif
-                    <span class="text-gray-400">{{ auth()->user()->name }}</span>
+                    <span class="text-gray-400">{{ auth()->user()->name }} &middot; {{ auth()->user()->role->label ?? '' }}</span>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="text-red-600 hover:underline">Log out</button>
