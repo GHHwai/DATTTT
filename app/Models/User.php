@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -24,6 +25,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role_id',
+        'avatar_path',
     ];
 
     /**
@@ -103,5 +105,18 @@ class User extends Authenticatable
         }
 
         return $this->role->permissions()->where('name', $permission)->exists();
+    }
+
+    /**
+     * Public URL for the user's uploaded profile photo, if any.
+     * Falls back to null so views can render an initials avatar instead.
+     */
+    public function avatarUrl(): ?string
+    {
+        if (! $this->avatar_path) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->avatar_path);
     }
 }

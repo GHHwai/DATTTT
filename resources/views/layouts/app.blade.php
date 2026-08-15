@@ -23,8 +23,9 @@
                         <a href="{{ route('admin.reports') }}" class="hover:underline text-indigo-600">Admin Reports</a>
                         <a href="{{ route('admin.users.index') }}" class="hover:underline text-indigo-600">Manage Accounts</a>
                     @endif
-                    <a href="{{ route('profile.edit') }}" class="text-gray-500 hover:underline">
-                        {{ auth()->user()->name }} &middot; {{ auth()->user()->role->label ?? '' }}
+                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 text-gray-600 hover:underline">
+                        <x-avatar :user="auth()->user()" size="sm" />
+                        <span>{{ auth()->user()->name }}</span>
                     </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
