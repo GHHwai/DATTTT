@@ -6,7 +6,7 @@
 <h1 class="text-xl font-semibold mb-4">Reports &amp; Analytics</h1>
 <p class="text-sm text-gray-500 mb-4">Visible to admins only — IT staff can work tickets but don't see this page.</p>
 
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
     <div class="bg-white rounded shadow p-4">
         <div class="text-2xl font-bold">{{ $stats['total_users'] }}</div>
         <div class="text-sm text-gray-500">Total Users</div>
@@ -23,6 +23,10 @@
         <div class="text-2xl font-bold">{{ $stats['resolved_tickets'] }}</div>
         <div class="text-sm text-gray-500">Resolved / Closed</div>
     </div>
+    <div class="bg-white rounded shadow p-4">
+        <div class="text-2xl font-bold">{{ $stats['unclaimed_tickets'] }}</div>
+        <div class="text-sm text-gray-500">Unclaimed</div>
+    </div>
 </div>
 
 <div class="grid md:grid-cols-2 gap-6">
@@ -35,12 +39,20 @@
         <canvas id="priorityChart" height="220"></canvas>
     </div>
     <div class="bg-white rounded shadow p-4">
+        <h2 class="font-medium mb-2">Tickets by Category</h2>
+        <canvas id="categoryChart" height="220"></canvas>
+    </div>
+    <div class="bg-white rounded shadow p-4">
         <h2 class="font-medium mb-2">Users by Role</h2>
         <canvas id="rolesChart" height="220"></canvas>
     </div>
     <div class="bg-white rounded shadow p-4">
         <h2 class="font-medium mb-2">Tickets Submitted (last 14 days)</h2>
         <canvas id="ticketsChart" height="220"></canvas>
+    </div>
+    <div class="bg-white rounded shadow p-4">
+        <h2 class="font-medium mb-2">Resolved Tickets by IT Staff</h2>
+        <canvas id="staffChart" height="220"></canvas>
     </div>
 </div>
 @endsection
@@ -76,6 +88,17 @@
                 },
             });
 
+            new Chart(document.getElementById('categoryChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(data.ticketsByCategory),
+                    datasets: [{
+                        data: Object.values(data.ticketsByCategory),
+                        backgroundColor: ['#a78bfa', '#f472b6', '#38bdf8', '#facc15', '#94a3b8'],
+                    }],
+                },
+            });
+
             new Chart(document.getElementById('rolesChart'), {
                 type: 'bar',
                 data: {
@@ -101,6 +124,19 @@
                         fill: false,
                     }],
                 },
+            });
+
+            new Chart(document.getElementById('staffChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(data.resolvedByStaff),
+                    datasets: [{
+                        label: 'Resolved Tickets',
+                        data: Object.values(data.resolvedByStaff),
+                        backgroundColor: '#10b981',
+                    }],
+                },
+                options: { indexAxis: 'y', plugins: { legend: { display: false } } },
             });
         });
 </script>

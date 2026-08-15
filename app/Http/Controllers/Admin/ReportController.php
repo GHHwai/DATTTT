@@ -18,6 +18,9 @@ class ReportController extends Controller
             'total_tickets' => Ticket::count(),
             'open_tickets' => Ticket::whereIn('status', ['open', 'in_progress'])->count(),
             'resolved_tickets' => Ticket::whereIn('status', ['resolved', 'closed'])->count(),
+            'unclaimed_tickets' => Ticket::whereNull('assigned_to')
+                ->whereNotIn('status', ['resolved', 'closed'])
+                ->count(),
         ];
 
         return view('admin.reports', compact('stats'));
@@ -36,6 +39,10 @@ class ReportController extends Controller
             ->groupBy('priority')
             ->pluck('total', 'priority');
 
+        $ticketsByCategory = Ticket::select('category', DB::raw('count(*) as total'))
+            ->groupBy('category')
+            ->pluck('total', 'category');
+
         $usersByRole = User::join('roles', 'users.role_id', '=', 'roles.id')
             ->select('roles.name', DB::raw('count(*) as total'))
             ->groupBy('roles.name')
@@ -47,11 +54,23 @@ class ReportController extends Controller
             ->orderBy('day')
             ->pluck('total', 'day');
 
+        // How many tickets each IT staff member has resolved/closed —
+        // relevant now that tickets are claimed/worked by IT staff.
+        $resolvedByStaff = Ticket::query()
+            ->join('users', 'tickets.assigned_to', '=', 'users.id')
+            ->whereIn('tickets.status', ['resolved', 'closed'])
+            ->select('users.name', DB::raw('count(*) as total'))
+            ->groupBy('users.name')
+            ->orderByDesc('total')
+            ->pluck('total', 'name');
+
         return response()->json([
             'ticketsByStatus' => $ticketsByStatus,
             'ticketsByPriority' => $ticketsByPriority,
+            'ticketsByCategory' => $ticketsByCategory,
             'usersByRole' => $usersByRole,
             'ticketsByDay' => $ticketsByDay,
+            'resolvedByStaff' => $resolvedByStaff,
         ]);
     }
 }

@@ -21,8 +21,11 @@
                     <a href="{{ route('chat.index') }}" class="hover:underline">AI Chat</a>
                     @if (auth()->user()->isAdmin())
                         <a href="{{ route('admin.reports') }}" class="hover:underline text-indigo-600">Admin Reports</a>
+                        <a href="{{ route('admin.users.index') }}" class="hover:underline text-indigo-600">Manage Accounts</a>
                     @endif
-                    <span class="text-gray-400">{{ auth()->user()->name }} &middot; {{ auth()->user()->role->label ?? '' }}</span>
+                    <a href="{{ route('profile.edit') }}" class="text-gray-500 hover:underline">
+                        {{ auth()->user()->name }} &middot; {{ auth()->user()->role->label ?? '' }}
+                    </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="text-red-600 hover:underline">Log out</button>
