@@ -4,10 +4,14 @@
 
 @section('content')
 <div class="bg-white rounded shadow p-6">
-    <h1 class="text-xl font-semibold mb-2">Welcome, {{ auth()->user()->name }} 👋</h1>
-    <p class="text-gray-500 mb-4">
-        You're logged in as <strong>{{ auth()->user()->role->label ?? 'User' }}</strong>.
-    </p>
+    <div class="flex items-center gap-3 mb-4">
+        <x-avatar :user="auth()->user()" size="md" />
+        <div>
+            <h1 class="text-xl font-semibold">
+                Welcome, {{ auth()->user()->name }} - {{ auth()->user()->role->label ?? 'No role' }} 👋
+            </h1>
+        </div>
+    </div>
 
     <div class="flex gap-3">
         <a href="{{ route('tickets.index') }}" class="bg-indigo-600 text-white rounded px-4 py-2 text-sm hover:bg-indigo-700">

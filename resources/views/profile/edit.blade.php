@@ -12,34 +12,36 @@
     @endif
 
     <div class="bg-white rounded shadow p-6">
-        <h1 class="text-xl font-semibold mb-1">My Profile</h1>
-        <p class="text-sm text-gray-500 mb-4">
-            {{ $user->role->label ?? 'No role assigned' }}
-        </p>
-
         <div class="flex items-center gap-4 mb-6">
             <x-avatar :user="$user" size="lg" />
 
-            <div class="flex flex-col gap-2">
-                <form method="POST" action="{{ route('profile.avatar.update') }}" enctype="multipart/form-data" class="flex items-center gap-2">
-                    @csrf
-                    <label class="text-sm bg-gray-800 text-white rounded px-3 py-1.5 cursor-pointer hover:bg-gray-900">
-                        Upload photo
-                        <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp" class="hidden" onchange="this.form.submit()">
-                    </label>
-                </form>
+            <div class="flex-1">
+                <h1 class="text-xl font-semibold">
+                    {{ $user->name }}
+                    <span class="text-gray-400 font-normal">- {{ $user->role->label ?? 'No role assigned' }}</span>
+                </h1>
 
-                @if ($user->avatar_path)
-                    <form method="POST" action="{{ route('profile.avatar.destroy') }}"
-                          onsubmit="return confirm('Remove your profile photo?');">
+                <div class="flex items-center gap-3 mt-2">
+                    <form method="POST" action="{{ route('profile.avatar.update') }}" enctype="multipart/form-data" class="flex items-center gap-2">
                         @csrf
-                        @method('DELETE')
-                        <button type="submit" class="text-sm text-red-600 hover:underline">Remove photo</button>
+                        <label class="text-sm bg-gray-800 text-white rounded px-3 py-1.5 cursor-pointer hover:bg-gray-900">
+                            Upload photo
+                            <input type="file" name="avatar" accept="image/png,image/jpeg,image/webp" class="hidden" onchange="this.form.submit()">
+                        </label>
                     </form>
-                @endif
+
+                    @if ($user->avatar_path)
+                        <form method="POST" action="{{ route('profile.avatar.destroy') }}"
+                              onsubmit="return confirm('Remove your profile photo?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-sm text-red-600 hover:underline">Remove photo</button>
+                        </form>
+                    @endif
+                </div>
 
                 @error('avatar')
-                    <p class="text-sm text-red-600">{{ $message }}</p>
+                    <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
                 @enderror
             </div>
         </div>

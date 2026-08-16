@@ -16,7 +16,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('tickets.store') }}" class="space-y-4">
+    <form method="POST" action="{{ route('tickets.store') }}" enctype="multipart/form-data" class="space-y-4">
         @csrf
 
         <div>
@@ -50,6 +50,18 @@
             <textarea name="description" rows="5" required
                       placeholder="What's happening, what have you tried, error messages, etc."
                       class="w-full border rounded px-3 py-2">{{ old('description') }}</textarea>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium mb-1">
+                Attachments <span class="text-gray-400 font-normal">(optional, up to 5 files, 10MB each)</span>
+            </label>
+            <input type="file" name="attachments[]" multiple
+                   accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip"
+                   class="w-full border rounded px-3 py-2 text-sm">
+            @error('attachments.*')
+                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+            @enderror
         </div>
 
         <button type="submit" class="bg-indigo-600 text-white rounded px-4 py-2 hover:bg-indigo-700">

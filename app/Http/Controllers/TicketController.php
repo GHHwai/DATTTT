@@ -2,13 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Attachment;
 use App\Models\Ticket;
+use App\Models\TicketComment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TicketController extends Controller
 {
+    private const ATTACHMENT_RULES = ['file', 'max:10240', 'mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt,csv,zip'];
+
     /**
      * Employees see only their own tickets. Anyone with tickets.view.all
      * (IT staff, admins) sees the shared queue with filter tabs.
@@ -48,9 +54,15 @@ class TicketController extends Controller
             'description' => ['required', 'string'],
             'category' => ['required', 'in:hardware,software,network,account,other'],
             'priority' => ['required', 'in:low,medium,high,urgent'],
+            'attachments' => ['nullable', 'array', 'max:5'],
+            'attachments.*' => self::ATTACHMENT_RULES,
         ]);
 
-        $ticket = $request->user()->tickets()->create($validated + ['status' => 'open']);
+        $ticket = $request->user()->tickets()->create(
+            collect($validated)->except('attachments')->toArray() + ['status' => 'open']
+        );
+
+        $this->storeAttachments($request, $ticket);
 
         return redirect()->route('tickets.show', $ticket)->with('status', 'Ticket submitted — IT has been notified.');
     }
@@ -59,7 +71,12 @@ class TicketController extends Controller
     {
         $this->authorizeTicketAccess($request, $ticket);
 
-        $ticket->load(['user', 'assignee', 'comments' => fn ($q) => $q->with('user')->oldest()]);
+        $ticket->load([
+            'user',
+            'assignee',
+            'attachments',
+            'comments' => fn ($q) => $q->with(['user', 'attachments'])->oldest(),
+        ]);
 
         return view('tickets.show', compact('ticket'));
     }
@@ -110,15 +127,57 @@ class TicketController extends Controller
         $this->authorizeTicketAccess($request, $ticket);
 
         $validated = $request->validate([
-            'body' => ['required', 'string', 'max:4000'],
+            'body' => ['nullable', 'required_without:attachments', 'string', 'max:4000'],
+            'attachments' => ['nullable', 'array', 'max:5', 'required_without:body'],
+            'attachments.*' => self::ATTACHMENT_RULES,
         ]);
 
-        $ticket->comments()->create([
+        $comment = $ticket->comments()->create([
             'user_id' => $request->user()->id,
-            'body' => $validated['body'],
+            'body' => $validated['body'] ?? '',
         ]);
+
+        $this->storeAttachments($request, $comment);
 
         return back()->with('status', 'Comment added.');
+    }
+
+    /**
+     * Stream an attachment's original file back to the browser, after
+     * confirming the requester has access to the parent ticket.
+     */
+    public function downloadAttachment(Request $request, Ticket $ticket, Attachment $attachment): StreamedResponse
+    {
+        $this->authorizeTicketAccess($request, $ticket);
+
+        $belongsToTicket = $attachment->attachable_type === Ticket::class
+            && $attachment->attachable_id === $ticket->id;
+
+        $belongsToComment = $attachment->attachable_type === TicketComment::class
+            && $attachment->attachable?->ticket_id === $ticket->id;
+
+        abort_unless($belongsToTicket || $belongsToComment, 404);
+
+        return Storage::disk('local')->download($attachment->path, $attachment->original_name);
+    }
+
+    /**
+     * Persist any uploaded files against the given ticket or comment.
+     * Files are stored on the private "local" disk, never publicly served.
+     */
+    private function storeAttachments(Request $request, Ticket|TicketComment $attachable): void
+    {
+        foreach ($request->file('attachments', []) as $file) {
+            $path = $file->store('ticket-attachments', 'local');
+
+            $attachable->attachments()->create([
+                'user_id' => $request->user()->id,
+                'path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getClientMimeType(),
+                'size' => $file->getSize(),
+            ]);
+        }
     }
 
     /**

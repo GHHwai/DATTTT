@@ -25,7 +25,7 @@
                     @endif
                     <a href="{{ route('profile.edit') }}" class="flex items-center gap-2 text-gray-600 hover:underline">
                         <x-avatar :user="auth()->user()" size="sm" />
-                        <span>{{ auth()->user()->name }}</span>
+                        <span>{{ auth()->user()->name }} - {{ auth()->user()->role->label ?? 'No role' }}</span>
                     </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf

@@ -18,6 +18,16 @@
         </div>
     @endif
 
+    @if ($errors->any())
+        <div class="rounded bg-red-100 text-red-800 px-4 py-2 text-sm">
+            <ul class="list-disc list-inside">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="bg-white rounded shadow p-6">
         <div class="flex items-start justify-between gap-4">
             <div>
@@ -50,6 +60,22 @@
         </div>
 
         <p class="mt-4 whitespace-pre-line">{{ $ticket->description }}</p>
+
+        @if ($ticket->attachments->isNotEmpty())
+            <div class="mt-4 pt-4 border-t">
+                <p class="text-sm font-medium mb-2">Attachments</p>
+                <div class="flex flex-wrap gap-2">
+                    @foreach ($ticket->attachments as $attachment)
+                        <a href="{{ route('tickets.attachments.download', [$ticket, $attachment]) }}"
+                           class="flex items-center gap-2 text-sm border rounded px-3 py-1.5 hover:bg-gray-50">
+                            <span>📎</span>
+                            <span class="truncate max-w-[160px]">{{ $attachment->original_name }}</span>
+                            <span class="text-gray-400 text-xs">({{ $attachment->humanSize() }})</span>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         @if ($ticket->resolution_notes)
             <div class="mt-4 rounded bg-green-50 border border-green-200 px-4 py-3 text-sm">
@@ -109,20 +135,50 @@
                     <p class="font-medium">{{ $comment->user->name }}
                         <span class="text-gray-400 font-normal">&middot; {{ $comment->created_at->diffForHumans() }}</span>
                     </p>
-                    <p class="whitespace-pre-line">{{ $comment->body }}</p>
+
+                    @if ($comment->body)
+                        <p class="whitespace-pre-line">{{ $comment->body }}</p>
+                    @endif
+
+                    @if ($comment->attachments->isNotEmpty())
+                        <div class="flex flex-wrap gap-2 mt-1">
+                            @foreach ($comment->attachments as $attachment)
+                                <a href="{{ route('tickets.attachments.download', [$ticket, $attachment]) }}"
+                                   class="flex items-center gap-1 text-xs border rounded px-2 py-1 hover:bg-gray-50">
+                                    <span>📎</span>
+                                    <span class="truncate max-w-[140px]">{{ $attachment->original_name }}</span>
+                                    <span class="text-gray-400">({{ $attachment->humanSize() }})</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
             @empty
                 <p class="text-sm text-gray-400">No comments yet.</p>
             @endforelse
         </div>
 
-        <form method="POST" action="{{ route('tickets.comments.store', $ticket) }}" class="flex gap-2">
+        <form method="POST" action="{{ route('tickets.comments.store', $ticket) }}" enctype="multipart/form-data" class="space-y-2">
             @csrf
-            <input type="text" name="body" placeholder="Add a comment or update..." required
-                   class="flex-1 border rounded px-3 py-2 text-sm">
-            <button class="bg-indigo-600 text-white rounded px-4 py-2 text-sm hover:bg-indigo-700">
-                Post
-            </button>
+
+            <div class="flex gap-2">
+                <input type="text" name="body" placeholder="Add a comment or update..."
+                       class="flex-1 border rounded px-3 py-2 text-sm">
+                <button class="bg-indigo-600 text-white rounded px-4 py-2 text-sm hover:bg-indigo-700">
+                    Post
+                </button>
+            </div>
+
+            <input type="file" name="attachments[]" multiple
+                   accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.zip"
+                   class="w-full border rounded px-3 py-1.5 text-xs text-gray-500">
+
+            @error('attachments.*')
+                <p class="text-xs text-red-600">{{ $message }}</p>
+            @enderror
+            @error('body')
+                <p class="text-xs text-red-600">{{ $message }}</p>
+            @enderror
         </form>
     </div>
 </div>
