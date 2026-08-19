@@ -3,8 +3,17 @@
 @section('title', 'Admin Reports')
 
 @section('content')
-<h1 class="text-xl font-semibold mb-4">Reports &amp; Analytics</h1>
-<p class="text-sm text-gray-500 mb-4">Visible to admins only — IT staff can work tickets but don't see this page.</p>
+<div class="flex items-center justify-between mb-4">
+    <div>
+        <h1 class="text-xl font-semibold">Reports &amp; Analytics</h1>
+        <p class="text-sm text-gray-500">Visible to admins only — IT staff can work tickets but don't see this page.</p>
+    </div>
+
+    <a href="{{ route('admin.reports.export') }}"
+       class="bg-emerald-600 text-white rounded px-4 py-2 text-sm hover:bg-emerald-700 shrink-0">
+        Export CSV
+    </a>
+</div>
 
 <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
     <div class="bg-white rounded shadow p-4">

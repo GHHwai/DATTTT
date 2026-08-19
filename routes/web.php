@@ -75,6 +75,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('reports');
     Route::get('/reports/data', [ReportController::class, 'chartData'])->name('reports.data');
+    Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
 
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
     Route::get('/users/create', [AdminUserController::class, 'create'])->name('users.create');
