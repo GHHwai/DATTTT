@@ -84,7 +84,7 @@ class ChatController extends Controller
                     'Content-Type' => 'application/json',
                 ],
                 'json' => [
-                    'model' => config('services.ai.model', 'llama-3.3-70b-versatile'),
+                    'model' => config('services.ai.model', 'openai/gpt-oss-120b'),
                     'messages' => $messages,
                     'temperature' => 0.7,
                 ],
